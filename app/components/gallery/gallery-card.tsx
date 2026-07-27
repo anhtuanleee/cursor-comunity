@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Avatar } from "@/components/ui/avatar";
+import { MediaCover } from "@/components/ui/media-cover";
 import type { GalleryItem } from "@/lib/types";
 
 interface GalleryCardProps {
@@ -30,10 +31,13 @@ export function GalleryCard({ item, priority, onCommentClick, onClick }: Gallery
     >
       <div className="relative overflow-hidden bg-bg-secondary cursor-pointer">
         {!imgError ? (
-          <img src={imageUrl} alt={item.title}
-            loading={priority ? "eager" : "lazy"}
+          <MediaCover
+            src={imageUrl}
+            alt={item.title}
+            priority={priority}
             onError={() => setImgError(true)}
-            className="w-full h-auto object-cover transition-all duration-300 group-hover:scale-105" />
+            className="w-full h-auto transition-all duration-300 group-hover:scale-105"
+          />
         ) : (
           <div className="w-full aspect-[4/5] flex items-center justify-center bg-bg-tertiary">
             <span className="text-body text-[#A0A0A0]">No image</span>

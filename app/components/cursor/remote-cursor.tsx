@@ -8,7 +8,7 @@ export function RemoteCursor({ color, x, y, message }: RemoteCursorProps) {
   return (
     <motion.div className="absolute pointer-events-none will-change-transform" style={{ left: 0, top: 0 }}
       animate={{ x, y }}
-      transition={{ duration: 0 }}>
+      transition={{ duration: 0.04, ease: "easeOut" }}>
       <svg width="18" height="22" viewBox="0 0 18 22" fill="none" className="drop-shadow-sm">
         <path d="M1 1L7 18L9.5 11L16 9.5L1 1Z" fill={color} stroke="white" strokeWidth="1.5" />
       </svg>

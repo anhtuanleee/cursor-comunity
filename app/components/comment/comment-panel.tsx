@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { MediaCover } from "@/components/ui/media-cover";
 import { useUser } from "@/providers/user-provider";
 import type { GalleryItem, Comment } from "@/lib/types";
 
@@ -76,8 +77,11 @@ export function CommentPanel({ item, comments, error, onClose, onAddComment, onA
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-14 border-b border-border-divider flex-shrink-0">
           <div className="flex items-center gap-2 min-w-0">
-            <img src={item.cover_url || (item.gallery?.[0]?.url ?? "")} alt={item.title}
-              className="h-8 w-8 rounded object-cover flex-shrink-0" />
+            <MediaCover
+              src={item.cover_url || (item.gallery?.[0]?.url ?? "")}
+              alt={item.title}
+              className="h-8 w-8 flex-shrink-0 rounded"
+            />
             <div className="min-w-0">
               <h2 className="text-body font-medium text-black truncate">{item.title}</h2>
               <p className="text-caption text-[#A0A0A0] truncate">by {item.creator_name}</p>

@@ -61,10 +61,15 @@ export function QuickChatInput({ position, color, onSend }: QuickChatInputProps)
     if (isOpen) inputRef.current?.focus();
   }, [isOpen]);
 
-  if (!isOpen || !anchor) return null;
+  const activePosition = position || anchor;
+  if (!isOpen || !activePosition) return null;
 
-  const left = Math.max(12, Math.min(anchor.x + 24, window.innerWidth - 344));
-  const top = Math.max(12, Math.min(anchor.y + 24, window.innerHeight - 72));
+  const inputWidth = 200;
+  const left = Math.max(12, Math.min(
+    activePosition.x - inputWidth - 8,
+    window.innerWidth - inputWidth - 12,
+  ));
+  const top = Math.max(12, Math.min(activePosition.y + 20, window.innerHeight - 44));
 
   const submit = () => {
     if (!text.trim()) return;
@@ -79,8 +84,18 @@ export function QuickChatInput({ position, color, onSend }: QuickChatInputProps)
       initial={{ opacity: 0, scale: 0.96, y: -3 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       style={{ left, top, backgroundColor: color }}
-      className="pointer-events-auto absolute w-[320px] max-w-[calc(100vw-24px)] rounded-full border-[3px] border-white p-1 shadow-[0_5px_12px_rgba(0,0,0,0.3)]"
+      className="pointer-events-auto absolute h-8 w-[200px] max-w-[calc(100vw-24px)] rounded-full border-0 p-0 shadow-[0_2px_6px_rgba(0,0,0,0.24)] outline-none ring-0"
     >
+      <svg
+        viewBox="0 0 22 24"
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-[10px] -top-[13px] h-6 w-[22px] overflow-visible"
+      >
+        <path
+          d="M1 18C7 15 13 9 21 1C17 9 16 16 17 23C12 20 7 18 1 18Z"
+          fill={color}
+        />
+      </svg>
       <input
         ref={inputRef}
         value={text}
@@ -98,7 +113,7 @@ export function QuickChatInput({ position, color, onSend }: QuickChatInputProps)
         }}
         placeholder="Type a message…"
         aria-label="Quick chat message"
-        className="h-12 w-full rounded-full bg-transparent px-5 text-[22px] font-normal leading-none text-white caret-white outline-none placeholder:text-white/60"
+        className="h-full w-full rounded-full border-0 bg-transparent px-3 text-[14px] font-normal leading-none text-white caret-white outline-none ring-0 placeholder:text-white/60 focus:border-0 focus:outline-none focus:ring-0"
       />
     </motion.div>
   );
