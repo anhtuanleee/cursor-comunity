@@ -1,0 +1,7 @@
+{
+  "name": "cursor-comunity",
+  "main": "index.ts",
+  "parties": {
+    "gallery": "index.ts"
+  }
+}
