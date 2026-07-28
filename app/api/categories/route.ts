@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
-import { sql } from "@/lib/db";
+import { listCategories } from "@/server/categories/categories.repository";
+import { logRouteError } from "@/server/http/responses";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const rows = await sql`SELECT DISTINCT slug, name FROM gallery_categories ORDER BY sort_order`;
-    return NextResponse.json({ categories: rows || [] });
+    return NextResponse.json({ categories: await listCategories() });
   } catch (error) {
-    console.error("[categories] GET failed", error);
-    return NextResponse.json({ categories: [], error: "Unable to load categories" }, { status: 500 });
+    logRouteError("categories.list", error);
+    return NextResponse.json(
+      { categories: [], error: "Unable to load categories" },
+      { status: 500 },
+    );
   }
 }
