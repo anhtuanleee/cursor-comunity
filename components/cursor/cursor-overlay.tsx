@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useCursors } from "@/hooks/use-cursors";
 import { RemoteCursor } from "./remote-cursor";
 import { QuickChatInput } from "./quick-chat-input";
 import { useUser } from "@/providers/user-provider";
+import { assignRemoteCursorColors } from "./cursor-remote-color";
 
 export function CursorOverlay() {
   const {
@@ -17,6 +18,13 @@ export function CursorOverlay() {
   } = useCursors();
   const { user } = useUser();
   const hasCustomCursor = Boolean(user);
+  const remoteCursorColors = useMemo(
+    () => assignRemoteCursorColors(
+      Array.from(remoteCursors.keys()).filter(id => id !== user?.id),
+      user?.color,
+    ),
+    [remoteCursors, user?.color, user?.id],
+  );
 
   useEffect(() => {
     const root = document.documentElement;
@@ -36,16 +44,19 @@ export function CursorOverlay() {
       ) : null}
       {Array.from(remoteCursors.values())
         .filter(c => c.id !== user?.id && c.lastSeen > 0)
-        .map(cursor => (
-          <RemoteCursor
-            key={cursor.id}
-            color={cursor.color}
-            x={cursor.x}
-            y={cursor.y}
-            smooth
-            message={chatMessages.get(cursor.id)?.text}
-          />
-        ))}
+        .map(cursor => {
+          const color = remoteCursorColors.get(cursor.id) ?? cursor.color;
+          return (
+            <RemoteCursor
+              key={cursor.id}
+              color={color}
+              x={cursor.x}
+              y={cursor.y}
+              smooth
+              message={chatMessages.get(cursor.id)?.text}
+            />
+          );
+        })}
       {user && (
         <QuickChatInput
           color={user.color}
