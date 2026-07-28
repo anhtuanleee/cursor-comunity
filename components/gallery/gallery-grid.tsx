@@ -70,8 +70,15 @@ export function GalleryGrid({
   const [declinedFocusVersion, setDeclinedFocusVersion] = useState<
     number | null
   >(null);
-  const visibleFocus =
+  const activeFocus =
     focus && focus.version !== declinedFocusVersion ? focus : null;
+  // The presenter already sees the focused card locally. A banner is only a
+  // request for other participants; this also avoids the hydration-time flash
+  // before the local tab identity is ready.
+  const visibleFocus =
+    activeFocus && currentUserId && activeFocus.presenterId !== currentUserId
+      ? activeFocus
+      : null;
 
   const joinFocus = async () => {
     const itemId = focus?.itemId;
@@ -133,8 +140,8 @@ export function GalleryGrid({
             onReact={onReact}
             onFocus={onFocus}
             onSave={onSave}
-            focused={visibleFocus?.itemId === item.id}
-            dimmed={Boolean(visibleFocus && visibleFocus.itemId !== item.id)}
+            focused={activeFocus?.itemId === item.id}
+            dimmed={Boolean(activeFocus && activeFocus.itemId !== item.id)}
             reactionCounts={reactionCounts[item.id]}
             liveReactions={reactionsByItem.get(item.id)}
           />

@@ -33,6 +33,10 @@ export function useCursors() {
   const pendingChatRef = useRef<string | null>(null);
   const chatFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastChatSentAtRef = useRef(0);
+  const pendingCursorUpdatesRef = useRef(
+    new Map<string, { x: number; y: number; lastSeen: number }>(),
+  );
+  const cursorFrameRef = useRef<number | null>(null);
 
   const clearRemoteChatTimer = useCallback((userId: string) => {
     const timer = chatTimersRef.current.get(userId);
@@ -67,6 +71,42 @@ export function useCursors() {
     }, delay);
     chatTimersRef.current.set(chat.user_id, timer);
   }, [clearRemoteChatTimer, user?.id]);
+
+  // WebSocket messages can arrive in bursts. Coalesce them into one React
+  // update per paint so a busy room never schedules a render per packet.
+  const flushRemoteCursorUpdates = useCallback(() => {
+    cursorFrameRef.current = null;
+    const pending = pendingCursorUpdatesRef.current;
+    if (pending.size === 0) return;
+    pendingCursorUpdatesRef.current = new Map();
+    setRemoteCursors(current => {
+      let changed = false;
+      const next = new Map(current);
+      for (const [userId, update] of pending) {
+        const existing = next.get(userId);
+        if (!existing) continue;
+        if (
+          existing.x === update.x &&
+          existing.y === update.y &&
+          existing.lastSeen === update.lastSeen
+        ) continue;
+        changed = true;
+        next.set(userId, { ...existing, ...update });
+      }
+      return changed ? next : current;
+    });
+  }, []);
+
+  const queueRemoteCursorUpdate = useCallback((userId: string, x: number, y: number) => {
+    pendingCursorUpdatesRef.current.set(userId, {
+      x,
+      y,
+      lastSeen: Date.now(),
+    });
+    if (cursorFrameRef.current === null) {
+      cursorFrameRef.current = window.requestAnimationFrame(flushRemoteCursorUpdates);
+    }
+  }, [flushRemoteCursorUpdates]);
 
   useEffect(() => {
     if (!socket) return;
@@ -104,18 +144,7 @@ export function useCursors() {
             });
             break;
           case "cursor-update":
-            setRemoteCursors(current => {
-              const existing = current.get(message.userId);
-              if (!existing) return current;
-              const next = new Map(current);
-              next.set(message.userId, {
-                ...existing,
-                x: message.x,
-                y: message.y,
-                lastSeen: Date.now(),
-              });
-              return next;
-            });
+            queueRemoteCursorUpdate(message.userId, message.x, message.y);
             break;
           case "cursor-chat-updated":
             scheduleRemoteChat(message.chat);
@@ -140,12 +169,17 @@ export function useCursors() {
     };
     socket.addEventListener("message", handler);
     return () => socket.removeEventListener("message", handler);
-  }, [clearRemoteChatTimer, scheduleRemoteChat, socket]);
+  }, [clearRemoteChatTimer, queueRemoteCursorUpdate, scheduleRemoteChat, socket]);
 
   useEffect(() => () => {
     for (const timer of chatTimersRef.current.values()) clearTimeout(timer);
     chatTimersRef.current.clear();
     if (chatFlushTimerRef.current) clearTimeout(chatFlushTimerRef.current);
+    pendingCursorUpdatesRef.current.clear();
+    if (cursorFrameRef.current !== null) {
+      window.cancelAnimationFrame(cursorFrameRef.current);
+      cursorFrameRef.current = null;
+    }
   }, []);
 
   useEffect(() => {

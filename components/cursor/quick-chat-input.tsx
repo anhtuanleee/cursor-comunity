@@ -23,7 +23,7 @@ interface QuickChatInputProps {
 
 const PLACEHOLDER = "Type a message…";
 const CHAT_IDLE_CLEAR = 5_000;
-const CHAT_MODE_IDLE = 30_000;
+const CHAT_MODE_IDLE = 10_000;
 
 function isEditableTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false;

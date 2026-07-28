@@ -5,7 +5,7 @@ import { readableTextColor } from "./cursor-chat-color";
 import {
   cursorChatMetrics,
 } from "./cursor-chat-metrics";
-import { useRef } from "react";
+import { memo, useRef } from "react";
 import { useCursorChatPlacement } from "./use-cursor-chat-placement";
 
 interface RemoteCursorProps {
@@ -15,7 +15,7 @@ interface RemoteCursorProps {
   message?: string;
 }
 
-export function RemoteCursor({ color, x, y, message }: RemoteCursorProps) {
+export const RemoteCursor = memo(function RemoteCursor({ color, x, y, message }: RemoteCursorProps) {
   const bubbleRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
   const { placement, maxWidth } = useCursorChatPlacement(
@@ -28,12 +28,13 @@ export function RemoteCursor({ color, x, y, message }: RemoteCursorProps) {
   const textColor = readableTextColor(color);
 
   return (
-    <motion.div
+    <div
       className="absolute pointer-events-none will-change-transform"
-      style={{ left: 0, top: 0 }}
-      initial={false}
-      animate={{ x, y }}
-      transition={{ duration: 0 }}
+      style={{
+        left: 0,
+        top: 0,
+        transform: `translate3d(${x}px, ${y}px, 0)`,
+      }}
     >
       <svg viewBox="0 0 18 22" fill="none" className="h-[3rem] w-[3.25rem] drop-shadow-sm">
         <path d="M1 1L7 18L9.5 11L16 9.5L1 1Z" fill="#111111" stroke="white" strokeWidth="1.5" />
@@ -68,6 +69,6 @@ export function RemoteCursor({ color, x, y, message }: RemoteCursorProps) {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
-}
+});
