@@ -17,7 +17,13 @@ export interface GalleryItem {
   source_url: string;
   source_type: string;
   cover_url: string;
-  gallery: { url: string; width: number; height: number }[];
+  gallery: {
+    url: string;
+    width: number;
+    height: number;
+    mediaUrl?: string | null;
+    mediaKind?: "image" | "video" | "gif" | "lottie";
+  }[];
   tags: { id: string; context: string; slug: string; name: string }[];
   stats: { views: number; clicks: number; copies: number; outbounds: number };
   rating: number | null;

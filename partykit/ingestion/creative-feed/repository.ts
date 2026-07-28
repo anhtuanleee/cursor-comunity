@@ -106,7 +106,13 @@ export async function persistGalleryItem(
     itemSlug: (link: string) => string;
   },
 ) {
-  const image = { url: input.entry.imageUrl, width: 0, height: 0 };
+  const image = {
+    url: input.entry.imageUrl,
+    width: 0,
+    height: 0,
+    mediaUrl: input.entry.mediaUrl,
+    mediaKind: input.entry.mediaKind,
+  };
   await sql`
     INSERT INTO items(
       id, slug, title, description, tagline, format, category_id,

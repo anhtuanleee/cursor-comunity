@@ -46,6 +46,37 @@ function firstAttribute(
   return "";
 }
 
+function mediaKind(url: string, type = ""):
+  "image" | "video" | "gif" | "lottie" {
+  const value = `${url} ${type}`.toLowerCase();
+  if (/(?:video\/|\.(?:mp4|mov|m4v|webm)(?:[?#]|$))/.test(value)) return "video";
+  if (/(?:image\/gif|\.gif(?:[?#]|$))/.test(value)) return "gif";
+  if (/(?:lottie|application\/json|\.json(?:[?#]|$))/.test(value)) return "lottie";
+  return "image";
+}
+
+function parseMedia(
+  block: string,
+  baseUrl: string,
+): { url: string; kind: "image" | "video" | "gif" | "lottie" } | null {
+  const candidates = [
+    block.match(/<(?:media:content|enclosure)\b[^>]*\burl=["']([^"']+)["'][^>]*>/i)?.[1] ?? "",
+    block.match(/<(?:video|source|lottie-player)\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/i)?.[1] ?? "",
+    block.match(/\b(?:href|src)=["']([^"']+\.(?:mp4|mov|m4v|webm|gif|json|lottie)(?:[?#][^"']*)?)["']/i)?.[1] ?? "",
+  ];
+  for (const candidate of candidates) {
+    const url = absoluteUrl(candidate, baseUrl);
+    if (!isHttpUrl(url)) continue;
+    const tag = block.match(new RegExp(
+      `<(?:media:content|enclosure)[^>]*\burl=["']${candidate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[^>]*>`,
+      "i",
+    ));
+    const type = tag?.[0].match(/\btype=["']([^"']+)["']/i)?.[1] ?? "";
+    return { url, kind: mediaKind(url, type || block) };
+  }
+  return null;
+}
+
 function parseImage(block: string, baseUrl: string): string | null {
   const candidates = [
     firstAttribute(
@@ -92,6 +123,8 @@ export function parseFeed(
       "dc:date",
     ]);
     const parsedDate = Date.parse(dateValue);
+    const media = parseMedia(block, sourceUrl);
+    const imageUrl = parseImage(block, sourceUrl);
     return [{
       title: title.slice(0, 240),
       link,
@@ -100,7 +133,9 @@ export function parseFeed(
         "summary",
         "content:encoded",
       ]).slice(0, 4_000),
-      imageUrl: parseImage(block, sourceUrl),
+      imageUrl,
+      mediaUrl: media?.url ?? imageUrl,
+      mediaKind: media?.kind ?? "image",
       publishedAt: Number.isFinite(parsedDate) ? parsedDate : Date.now(),
     }];
   });

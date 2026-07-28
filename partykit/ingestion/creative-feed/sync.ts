@@ -193,7 +193,11 @@ export async function syncCreativeSources(
           }
           // The gate has already verified it; this explicit narrowing keeps
           // the storage boundary non-nullable as well.
-          const imageUrl = entry.imageUrl;
+          const imageUrl = entry.imageUrl ?? (
+            entry.mediaKind === "video" || entry.mediaKind === "gif"
+              ? entry.mediaUrl
+              : null
+          );
           if (!imageUrl) continue;
           const enriched = await enrichWithGemini(entry, source, env);
           const displayEntry = enriched
@@ -202,11 +206,17 @@ export async function syncCreativeSources(
                 tags: [...(source.tags ?? []), ...enriched.tags],
               }
             : { ...entry, description: "", tags: source.tags ?? [] };
+          const mediaTags = displayEntry.mediaKind === "image"
+            ? []
+            : [displayEntry.mediaKind, "motion"];
           await persistGalleryItem(sql, {
             externalId,
             categoryId: resolvedCategoryId,
             entry: { ...displayEntry, imageUrl },
-            tags: sourceTags({ ...source, tags: displayEntry.tags }),
+            tags: sourceTags({
+              ...source,
+              tags: [...displayEntry.tags, ...mediaTags],
+            }),
             itemSlug,
           });
           synced++;

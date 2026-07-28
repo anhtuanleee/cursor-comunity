@@ -13,6 +13,8 @@ export interface CreativeEntry {
   link: string;
   description: string;
   imageUrl: string | null;
+  mediaUrl: string | null;
+  mediaKind: "image" | "video" | "gif" | "lottie";
   publishedAt: number;
 }
 
