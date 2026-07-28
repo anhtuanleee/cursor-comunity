@@ -42,6 +42,7 @@ export function CursorOverlay() {
             color={cursor.color}
             x={cursor.x}
             y={cursor.y}
+            smooth
             message={chatMessages.get(cursor.id)?.text}
           />
         ))}

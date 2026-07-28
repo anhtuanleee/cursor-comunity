@@ -13,9 +13,16 @@ interface RemoteCursorProps {
   x: number;
   y: number;
   message?: string;
+  smooth?: boolean;
 }
 
-export const RemoteCursor = memo(function RemoteCursor({ color, x, y, message }: RemoteCursorProps) {
+export const RemoteCursor = memo(function RemoteCursor({
+  color,
+  x,
+  y,
+  message,
+  smooth = false,
+}: RemoteCursorProps) {
   const bubbleRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
   const { placement, maxWidth } = useCursorChatPlacement(
@@ -34,6 +41,9 @@ export const RemoteCursor = memo(function RemoteCursor({ color, x, y, message }:
         left: 0,
         top: 0,
         transform: `translate3d(${x}px, ${y}px, 0)`,
+        transition: smooth
+          ? "transform 0.08s cubic-bezier(0.22, 1, 0.36, 1)"
+          : "none",
       }}
     >
       <svg viewBox="0 0 18 22" fill="none" className="h-[3rem] w-[3.25rem] drop-shadow-sm">
