@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
-import { Providers } from "./providers/providers";
+import { Providers } from "@/providers/providers";
 
 export const metadata: Metadata = {
   title: "Cursor Community – Design Inspiration",
@@ -12,15 +13,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  modal,
 }: {
   children: React.ReactNode;
+  modal: React.ReactNode;
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="bg-white text-text-primary font-sans text-body antialiased min-h-screen">
         <Providers>
           {children}
+          {modal}
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
