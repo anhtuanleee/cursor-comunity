@@ -138,7 +138,14 @@ export function useCollaboration() {
       try {
         const message = JSON.parse(event.data) as ServerMessage;
         if (message.type === "room-state") {
-          setFocusState(message.focus);
+          setFocusState(current => {
+            if (!message.focus) return current?.presenterId === user?.id ? current : null;
+            // The room snapshot can race with our optimistic focus-set. Keep
+            // the newer local state until the authoritative update arrives.
+            return current && current.version > message.focus.version
+              ? current
+              : message.focus;
+          });
         } else if (message.type === "focus-updated") {
           setFocusState(current =>
             !current || message.focus.version >= current.version
@@ -160,7 +167,7 @@ export function useCollaboration() {
     };
     socket.addEventListener("message", handler);
     return () => socket.removeEventListener("message", handler);
-  }, [showReaction, socket]);
+  }, [showReaction, socket, user?.id]);
 
   useEffect(
     () => () => {

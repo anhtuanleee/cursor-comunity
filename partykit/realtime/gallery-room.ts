@@ -342,6 +342,9 @@ export class GalleryRoom extends DurableObject<Env> {
     const user = getSocketAttachment(socket).user;
     if (user) {
       this.broadcast({ type: "user-left", userId: user.id }, socket);
+      // Do not leave a presenter banner behind after a refresh, tab close, or
+      // network drop. A focus belongs to the live socket that created it.
+      void this.clearFocus(user.id);
     }
   }
 }
