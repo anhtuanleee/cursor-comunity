@@ -12,7 +12,9 @@ import type {
 
 const CHAT_VISIBLE_DURATION = 5_000;
 const CHAT_SEND_INTERVAL = 80;
-const CURSOR_SEND_INTERVAL = 50;
+// 25fps keeps remote movement responsive without flooding the room with
+// pointer packets; incoming bursts are coalesced to one paint below.
+const CURSOR_SEND_INTERVAL = 40;
 
 function sendSocketMessage(socket: WebSocket | null, message: ClientMessage) {
   if (!socket || socket.readyState !== WebSocket.OPEN) return false;
