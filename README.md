@@ -26,6 +26,30 @@ Regenerate Cloudflare binding types after changing `wrangler.jsonc`:
 npm run worker:types
 ```
 
+## Testing
+
+Jest covers deterministic unit/component behavior. Playwright covers browser
+flows against a running Next.js app, including intercepted item modals and
+card-level navigation:
+
+```bash
+npm run test:unit
+npx playwright install chromium
+DATABASE_URL=... npm run test:e2e
+```
+
+To run the browser suite against an already deployed or shared environment,
+set `PLAYWRIGHT_BASE_URL`; the local `npm run dev` web server is still started
+when the variable is omitted:
+
+```bash
+PLAYWRIGHT_BASE_URL=https://preview.example.com npm run test:e2e
+```
+
+The e2e fixtures expect at least one published gallery item. Keep the suite
+against a staging database or preview deployment so comments, focus actions,
+and modal navigation do not mutate production data.
+
 ## Backend structure
 
 ```text
