@@ -28,7 +28,10 @@ export function ItemDetailContent({ item }: { item: GalleryItem }) {
         <span className="absolute left-5 top-5 z-10 rounded-full border border-black/10 bg-white/70 px-2.5 py-1 font-mono text-[0.625rem] uppercase tracking-[0.14em] text-black/60 backdrop-blur">
           Visual reference
         </span>
-        <ViewTransition name={`reference-media-${item.id}`} share="morph" default="none">
+        {/* The gallery card remains mounted behind an intercepted modal. Keep
+            this transition unnamed so React never mounts duplicate shared
+            element names at the same time. */}
+        <ViewTransition default="none">
           <MediaCover
             src={media}
             alt={item.title}

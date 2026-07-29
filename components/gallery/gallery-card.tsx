@@ -70,12 +70,20 @@ function GalleryCardComponent({
     <article
       data-item-id={item.id}
       data-tour="reference-card"
-      className={`group transition-opacity duration-200 [content-visibility:auto] [contain-intrinsic-size:auto_28rem] ${
+      className={`group relative transition-opacity duration-200 [content-visibility:auto] [contain-intrinsic-size:auto_28rem] ${
         featured ? "md:col-span-2" : ""
       } ${
         dimmed ? "opacity-40" : "opacity-100"
       }`}
     >
+      {href ? (
+        <DetailLink
+          href={href}
+          aria-label={`Open ${item.title}`}
+          className="absolute inset-0 z-[1] rounded-[0.75rem] focus-visible:outline-none focus-visible:ring-[0.1875rem] focus-visible:ring-black focus-visible:ring-offset-[0.1875rem]"
+        />
+      ) : null}
+
       <div
         className={`relative cursor-pointer overflow-hidden bg-bg-secondary transition-shadow ${
           focused
@@ -106,14 +114,6 @@ function GalleryCardComponent({
           )}
         </ViewTransition>
 
-        {href ? (
-          <DetailLink
-            href={href}
-            aria-label={`Open ${item.title}`}
-            className="absolute inset-0 z-[1] focus-visible:outline-none focus-visible:ring-[0.1875rem] focus-visible:ring-black focus-visible:ring-inset"
-          />
-        ) : null}
-
         <div className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center gap-1">
           {liveReactions
             .filter(reaction => reaction.delta > 0)
@@ -133,7 +133,7 @@ function GalleryCardComponent({
             })}
         </div>
 
-        <div data-tour="card-actions" className="absolute inset-0 z-[2] flex flex-col justify-end bg-gradient-to-t from-black/60 via-transparent to-transparent p-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+        <div data-tour="card-actions" className="pointer-events-none absolute inset-0 z-[2] flex flex-col justify-end bg-gradient-to-t from-black/60 via-transparent to-transparent p-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Avatar src={item.creator_avatar} name={item.creator_name} size="sm" />
@@ -170,7 +170,7 @@ function GalleryCardComponent({
                       event.stopPropagation();
                       onReact?.(item, reaction.kind);
                     }}
-                    className="flex h-7 items-center gap-1 rounded-btn bg-black/30 px-2 text-caption text-white backdrop-blur-sm transition-colors hover:bg-white hover:text-black"
+                    className="pointer-events-auto flex h-7 items-center gap-1 rounded-btn bg-black/30 px-2 text-caption text-white backdrop-blur-sm transition-colors hover:bg-white hover:text-black"
                   >
                     <Icon size="0.875rem" />
                     {count > 0 ? count : null}
@@ -187,7 +187,7 @@ function GalleryCardComponent({
                   event.stopPropagation();
                   onFocus?.(item);
                 }}
-                className={`flex h-7 w-7 items-center justify-center rounded-full backdrop-blur-sm transition-colors ${
+                className={`pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full backdrop-blur-sm transition-colors ${
                   focused
                     ? "bg-white text-black"
                     : "bg-black/30 text-white hover:bg-white hover:text-black"
@@ -203,7 +203,7 @@ function GalleryCardComponent({
                   event.stopPropagation();
                   onSave?.(item);
                 }}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm transition-colors hover:bg-white hover:text-black"
+                className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm transition-colors hover:bg-white hover:text-black"
               >
                 <BoardIcon size="0.875rem" />
               </button>
@@ -227,7 +227,7 @@ function GalleryCardComponent({
                 event.stopPropagation();
                 onCommentClick(item);
               }}
-              className="flex items-center gap-1 text-button text-white transition-colors hover:text-white/80"
+              className="pointer-events-auto flex items-center gap-1 text-button text-white transition-colors hover:text-white/80"
             >
               <CommentIcon size={15} />
               Comment
@@ -236,16 +236,10 @@ function GalleryCardComponent({
         </div>
       </div>
 
-      <div className="mt-2 px-0.5">
-        {href ? (
-          <DetailLink href={href} className="line-clamp-1 text-body font-normal leading-[1.21875rem] text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15">
-            {item.title}
-          </DetailLink>
-        ) : (
-          <h3 className="line-clamp-1 text-body font-normal leading-[1.21875rem] text-primary">
-            {item.title}
-          </h3>
-        )}
+      <div className="pointer-events-none relative z-[2] mt-2 px-0.5">
+        <h3 className="line-clamp-1 text-body font-normal leading-[1.21875rem] text-primary">
+          {item.title}
+        </h3>
         {item.description ? (
           <p className="mt-0.5 line-clamp-2 text-body leading-[1.21875rem] text-text-secondary">
             {item.description}
