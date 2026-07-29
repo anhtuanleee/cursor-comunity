@@ -1,5 +1,6 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
 import { sql } from "@/server/database/client";
 import type { GalleryItem, GalleryPage } from "@/lib/types";
 
@@ -123,7 +124,8 @@ export async function getGalleryPage({
   };
 }
 
-export async function getGalleryItem(identifier: string): Promise<GalleryItem | null> {
+const getCachedGalleryItem = unstable_cache(
+  async (identifier: string): Promise<GalleryItem | null> => {
   const rows = await sql`
     SELECT
       i.*,
@@ -142,4 +144,25 @@ export async function getGalleryItem(identifier: string): Promise<GalleryItem | 
 
   const row = rows[0] as Record<string, unknown> | undefined;
   return row ? mapGalleryItem(row) : null;
+  },
+  ["gallery-item"],
+  { revalidate: 300 },
+);
+
+export async function getGalleryItem(identifier: string): Promise<GalleryItem | null> {
+  return getCachedGalleryItem(identifier);
+}
+
+export async function getPublishedItemSlugs(limit = 500): Promise<string[]> {
+  const safeLimit = Math.min(2_000, Math.max(1, Math.floor(limit)));
+  const rows = await sql`
+    SELECT slug
+    FROM items
+    WHERE status = 'published' AND slug <> ''
+    ORDER BY published_at DESC, id DESC
+    LIMIT ${safeLimit}
+  `;
+  return rows
+    .map(row => String(row.slug || ""))
+    .filter(Boolean);
 }

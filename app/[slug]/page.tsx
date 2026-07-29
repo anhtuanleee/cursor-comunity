@@ -1,8 +1,19 @@
 import { notFound } from "next/navigation";
 import { ItemDetailContent } from "@/components/gallery/item-detail-content";
-import { getGalleryItem } from "@/server/gallery/gallery.service";
+import {
+  getGalleryItem,
+  getPublishedItemSlugs,
+} from "@/server/gallery/gallery.service";
 
-export const dynamic = "force-dynamic";
+// Pre-render the most recent references at build time. New references remain
+// available on demand and the page output is refreshed through ISR.
+export const revalidate = 300;
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  const slugs = await getPublishedItemSlugs();
+  return slugs.map(slug => ({ slug }));
+}
 
 export default async function ItemDetailPage({
   params,

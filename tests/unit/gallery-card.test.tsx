@@ -3,13 +3,14 @@ import { GalleryCard } from "@/components/gallery/gallery-card";
 import type { GalleryItem } from "@/lib/types";
 
 const push = jest.fn();
+const prefetch = jest.fn();
 
 jest.mock("@/lib/view-transition", () => ({
   ViewTransition: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push }),
+  useRouter: () => ({ push, prefetch }),
 }));
 
 jest.mock("next/link", () => ({
@@ -62,6 +63,7 @@ const item: GalleryItem = {
 describe("GalleryCard", () => {
   beforeEach(() => {
     push.mockClear();
+    prefetch.mockClear();
   });
 
   it("renders a full-card detail link", () => {
@@ -78,6 +80,9 @@ describe("GalleryCard", () => {
     });
     expect(link).toHaveClass("absolute", "inset-0");
     expect(link).toHaveAttribute("href", `/${item.slug}`);
+
+    fireEvent.mouseEnter(link);
+    expect(prefetch).toHaveBeenCalledWith(`/${item.slug}`);
   });
 
   it("keeps card actions outside the detail navigation", () => {
