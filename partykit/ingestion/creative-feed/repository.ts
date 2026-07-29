@@ -109,7 +109,8 @@ export async function persistGalleryItem(
   input: {
     externalId: string;
     categoryId: string;
-    entry: CreativeEntry & { imageUrl: string };
+    entry: CreativeEntry & { imageUrl: string; author: string };
+    creatorId: string;
     tags: Array<{
       id: string;
       context: string;
@@ -119,6 +120,18 @@ export async function persistGalleryItem(
     itemSlug: (link: string) => string;
   },
 ) {
+  const now = Date.now();
+  await sql`
+    INSERT INTO creators(id, name, website, created_at, updated_at)
+    VALUES(
+      ${input.creatorId}, ${input.entry.author},
+      ${new URL(input.entry.link).origin}, ${now}, ${now}
+    )
+    ON CONFLICT(id) DO UPDATE SET
+      name = EXCLUDED.name,
+      website = EXCLUDED.website,
+      updated_at = EXCLUDED.updated_at
+  `;
   const gallery = [
     ...(input.entry.images ?? []),
     {
@@ -163,12 +176,12 @@ export async function persistGalleryItem(
       ${input.externalId},
       ${input.itemSlug(input.entry.link)},
       ${input.entry.title}, ${input.entry.description}, NULL, 'creative',
-      ${input.categoryId}, NULL, ${input.entry.link}, 'creative-feed',
+      ${input.categoryId}, ${input.creatorId}, ${input.entry.link}, 'creative-feed',
       ${input.entry.imageUrl}, ${JSON.stringify(gallery)},
       ${JSON.stringify(input.tags)},
       ${JSON.stringify({ views: 0, clicks: 0, copies: 0, outbounds: 0 })},
       'published', ${input.entry.publishedAt}, ${input.entry.publishedAt},
-      ${Date.now()}
+      ${now}
     )
     ON CONFLICT(id) DO UPDATE SET
       title = EXCLUDED.title,

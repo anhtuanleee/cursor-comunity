@@ -111,7 +111,7 @@ export async function syncCreativeSources(
         )
         VALUES(
           ${sourceKey}, 'rss', ${source.url}, ${sourceName}, TRUE, 'link-only',
-          ${source.autoPublish ? "trusted-feed" : "review-required"},
+          ${source.autoPublish ? "trusted-feed" : "automated-gate"},
           ${JSON.stringify(source)}, ${startedAt}, ${startedAt}
         )
         ON CONFLICT(url) DO UPDATE SET
@@ -182,7 +182,7 @@ export async function syncCreativeSources(
             payload,
             checksum: payloadChecksum(payload),
           });
-          const moderation = moderateCreativeEntry(entry, source);
+          const moderation = moderateCreativeEntry(entry);
           await persistModerationDecision(sql, {
             sourceKey,
             externalId,
@@ -190,6 +190,13 @@ export async function syncCreativeSources(
           });
           if (moderation.decision !== "approved") {
             await unpublishRejectedItem(sql, externalId);
+            rejected++;
+            continue;
+          }
+          const author = entry.author?.trim();
+          // Kept as a storage-boundary assertion even though the moderation
+          // gate above has already validated the author.
+          if (!author) {
             rejected++;
             continue;
           }
@@ -214,7 +221,8 @@ export async function syncCreativeSources(
           await persistGalleryItem(sql, {
             externalId,
             categoryId: resolvedCategoryId,
-            entry: { ...displayEntry, imageUrl },
+            entry: { ...displayEntry, imageUrl, author },
+            creatorId: `creative-creator-${payloadChecksum(`${sourceKey}:${author.toLowerCase()}`).slice(0, 24)}`,
             tags: sourceTags({
               ...source,
               tags: [...displayEntry.tags, ...mediaTags],

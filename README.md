@@ -134,9 +134,12 @@ Or attach a category and tags per source with JSON:
 CREATIVE_FEEDS='[{"url":"https://example.com/feed.xml","category":"Brand Inspiration","tags":["typography","branding"]}]'
 ```
 
-All parsed entries are retained in `raw_items`; only entries with a valid
-public image URL are published to the gallery. Each published entry is
-deduplicated by its canonical link, stored as
+All parsed entries are retained in `raw_items`; publishing is automatic but
+strict. An entry must be in creative/UI-UX scope, have a valid public cover
+(image, video, GIF, or Lottie), and expose a credible article author. Unsafe,
+promotional, placeholder-media, or off-topic entries stay rejected with an
+audit record in `moderation_decisions`. Approved entries receive a creator
+record and are deduplicated by their canonical link, stored as
 `source_type = creative-feed`, and normalized into the existing `items` table.
 The Codrops adapter resolves same-origin Open Graph previews because that feed
 uses video enclosures rather than image covers. Configure only sources whose

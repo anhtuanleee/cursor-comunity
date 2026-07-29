@@ -120,6 +120,13 @@ export function parseFeed(
     const link = absoluteUrl(rawLink, sourceUrl);
     if (!title || !isHttpUrl(link)) return [];
 
+    const author = firstTag(block, [
+      "dc:creator",
+      "author",
+      "itunes:author",
+      "media:credit",
+    ]).replace(/\s+/g, " ").trim();
+
     const dateValue = firstTag(block, [
       "pubDate",
       "published",
@@ -131,6 +138,7 @@ export function parseFeed(
     const imageUrl = parseImage(block, sourceUrl);
     return [{
       title: title.slice(0, 240),
+      author: author ? author.slice(0, 120) : null,
       link,
       description: firstTag(block, [
         "description",

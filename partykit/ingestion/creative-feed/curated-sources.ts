@@ -24,8 +24,9 @@ export const CURATED_CREATIVE_SOURCES: CreativeSource[] = [
   },
 ];
 
-// This is an editorial allow-list, not merely a convenience list. Runtime
-// feeds configured through CREATIVE_FEEDS stay in review until moved here.
+// This is the default source registry. Runtime feeds configured through
+// CREATIVE_FEEDS go through the same automated content, media, and author
+// gates before they can be published.
 for (const source of CURATED_CREATIVE_SOURCES) {
   source.autoPublish = true;
 }

@@ -75,8 +75,8 @@ export function mergeSources(
       ...previous,
       ...source,
       url: normalizedUrl,
-      // An environment variable must never elevate an unreviewed feed. Only
-      // the curated allow-list can grant automatic publication.
+      // A configured feed cannot inherit source trust; every individual item
+      // is still evaluated by the automated creative moderation gate.
       autoPublish: previous?.autoPublish === true || source.autoPublish === true,
     });
   }

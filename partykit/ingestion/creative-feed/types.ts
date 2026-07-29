@@ -19,6 +19,8 @@ export interface CreativeImage {
 
 export interface CreativeEntry {
   title: string;
+  /** RSS/Atom article author. A publisher fallback is deliberately not used. */
+  author: string | null;
   link: string;
   description: string;
   imageUrl: string | null;
