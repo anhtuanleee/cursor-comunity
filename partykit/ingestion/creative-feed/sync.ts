@@ -195,7 +195,7 @@ export async function syncCreativeSources(
           }
           // The gate has already verified it; this explicit narrowing keeps
           // the storage boundary non-nullable as well.
-          const imageUrl = entry.imageUrl ?? (
+          const imageUrl = entry.imageUrl ?? entry.images?.[0]?.url ?? (
             entry.mediaKind === "video" || entry.mediaKind === "gif"
               ? entry.mediaUrl
               : null

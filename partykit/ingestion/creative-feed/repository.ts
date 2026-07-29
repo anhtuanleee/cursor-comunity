@@ -119,13 +119,40 @@ export async function persistGalleryItem(
     itemSlug: (link: string) => string;
   },
 ) {
-  const image = {
-    url: input.entry.imageUrl,
-    width: 0,
-    height: 0,
-    mediaUrl: input.entry.mediaUrl,
-    mediaKind: input.entry.mediaKind,
-  };
+  const gallery = [
+    ...(input.entry.images ?? []),
+    {
+      url: input.entry.imageUrl,
+      width: 0,
+      height: 0,
+      role: "hero" as const,
+      source: "feed" as const,
+      alt: undefined,
+    },
+  ]
+    .filter(image => image.url)
+    .filter((image, index, list) =>
+      list.findIndex(candidate => candidate.url === image.url) === index)
+    .sort((a, b) => {
+      const rank = (role: string) =>
+        role === "hero" ? 0 : role === "gallery" ? 1 : role === "video-poster" ? 2 : 3;
+      return rank(a.role) - rank(b.role);
+    })
+    .slice(0, 12)
+    .map(image => ({
+      url: image.url,
+      width: image.width,
+      height: image.height,
+      mediaUrl: image.url === input.entry.imageUrl
+        ? input.entry.mediaUrl
+        : null,
+      mediaKind: image.url === input.entry.imageUrl
+        ? input.entry.mediaKind
+        : "image" as const,
+      role: image.role,
+      source: image.source,
+      alt: image.alt ?? null,
+    }));
   await sql`
     INSERT INTO items(
       id, slug, title, description, tagline, format, category_id,
@@ -137,7 +164,7 @@ export async function persistGalleryItem(
       ${input.itemSlug(input.entry.link)},
       ${input.entry.title}, ${input.entry.description}, NULL, 'creative',
       ${input.categoryId}, NULL, ${input.entry.link}, 'creative-feed',
-      ${input.entry.imageUrl}, ${JSON.stringify([image])},
+      ${input.entry.imageUrl}, ${JSON.stringify(gallery)},
       ${JSON.stringify(input.tags)},
       ${JSON.stringify({ views: 0, clicks: 0, copies: 0, outbounds: 0 })},
       'published', ${input.entry.publishedAt}, ${input.entry.publishedAt},

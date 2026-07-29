@@ -13,12 +13,14 @@ export const CURATED_CREATIVE_SOURCES: CreativeSource[] = [
     url: "https://sidebar.io/feed.xml",
     category: "Design Resources",
     tags: ["design", "resources", "curated"],
+    resolvePageImage: true,
   },
   {
     name: "One Page Love",
     url: "https://onepagelove.com/feed",
     category: "Website Inspiration",
     tags: ["landing-page", "web-design", "inspiration"],
+    resolvePageImage: true,
   },
 ];
 

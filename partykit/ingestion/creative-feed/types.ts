@@ -8,11 +8,21 @@ export interface CreativeSource {
   autoPublish?: boolean;
 }
 
+export interface CreativeImage {
+  url: string;
+  width: number;
+  height: number;
+  role: "hero" | "gallery" | "social" | "video-poster";
+  source: "feed" | "og:image" | "twitter:image" | "picture" | "img" | "json-ld" | "video";
+  alt?: string;
+}
+
 export interface CreativeEntry {
   title: string;
   link: string;
   description: string;
   imageUrl: string | null;
+  images?: CreativeImage[];
   mediaUrl: string | null;
   mediaKind: "image" | "video" | "gif" | "lottie";
   publishedAt: number;
