@@ -2,12 +2,15 @@ import "server-only";
 
 import { unstable_cache } from "next/cache";
 import { sql } from "@/server/database/client";
+import { galleryMediaUrl, galleryOutboundUrl } from "@/lib/media-routes";
 import type { GalleryItem, GalleryPage } from "@/lib/types";
 
 interface GalleryCursor {
   publishedAt: number;
   id: string;
 }
+
+const PUBLIC_ITEM_SLUG = /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function encodeCursor(cursor: GalleryCursor): string {
   return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
@@ -40,9 +43,19 @@ function parseJson<T>(value: unknown, fallback: T): T {
   }
 }
 
+function isVideoSource(value: string | null | undefined): boolean {
+  return /\.(mp4|webm|mov|m4v)(?:$|[?#])/i.test(value || "");
+}
+
 function mapGalleryItem(row: Record<string, unknown>): GalleryItem {
+  const id = String(row.id);
+  const rawGallery = parseJson<GalleryItem["gallery"]>(row.gallery_json, []);
+  const rawCoverUrl = String(row.cover_url || "");
+  const rawCreatorAvatar = String(row.ca || "");
+  const rawSourceUrl = String(row.source_url || "");
+
   return {
-    id: String(row.id),
+    id,
     slug: String(row.slug || ""),
     title: String(row.title || ""),
     description: String(row.description || ""),
@@ -54,11 +67,31 @@ function mapGalleryItem(row: Record<string, unknown>): GalleryItem {
     creator_id: String(row.creator_id || ""),
     creator_name: String(row.cn || ""),
     creator_handle: String(row.ch || ""),
-    creator_avatar: String(row.ca || ""),
-    source_url: String(row.source_url || ""),
+    creator_avatar: rawCreatorAvatar ? galleryMediaUrl(id, "avatar") : "",
+    source_url: rawSourceUrl ? galleryOutboundUrl(id) : "",
     source_type: String(row.source_type || ""),
-    cover_url: String(row.cover_url || ""),
-    gallery: parseJson(row.gallery_json, []),
+    cover_url: rawCoverUrl
+      ? galleryMediaUrl(id, "cover", isVideoSource(rawCoverUrl) ? "video" : undefined)
+      : "",
+    gallery: rawGallery.map((media, index) => ({
+      ...media,
+      url: galleryMediaUrl(
+        id,
+        index,
+        media.mediaKind === "video" || isVideoSource(media.mediaUrl || media.url)
+          ? "video"
+          : undefined,
+      ),
+      mediaUrl: media.mediaUrl
+        ? galleryMediaUrl(
+            id,
+            index,
+            media.mediaKind === "video" || isVideoSource(media.mediaUrl)
+              ? "video"
+              : undefined,
+          )
+        : null,
+    })),
     tags: parseJson(row.tags_json, []),
     stats: parseJson(row.stats_json, { views: 0, clicks: 0, copies: 0, outbounds: 0 }),
     rating: (row.rating as number | null) ?? null,
@@ -137,7 +170,7 @@ const getCachedGalleryItem = unstable_cache(
     FROM items i
     LEFT JOIN creators c ON i.creator_id = c.id
     LEFT JOIN gallery_categories cat ON i.category_id = cat.id
-    WHERE (i.slug = ${identifier} OR i.id = ${identifier})
+    WHERE i.slug = ${identifier}
       AND i.status = 'published'
     LIMIT 1
   `;
@@ -150,7 +183,67 @@ const getCachedGalleryItem = unstable_cache(
 );
 
 export async function getGalleryItem(identifier: string): Promise<GalleryItem | null> {
+  if (!PUBLIC_ITEM_SLUG.test(identifier)) return null;
   return getCachedGalleryItem(identifier);
+}
+
+export type GalleryMediaTarget = {
+  url: string;
+  sourceUrl: string;
+};
+
+const getCachedMediaTarget = unstable_cache(
+  async (itemId: string, asset: string): Promise<GalleryMediaTarget | null> => {
+    const rows = await sql`
+      SELECT i.cover_url, i.gallery_json, i.source_url, c.avatar_url AS creator_avatar
+      FROM items i
+      LEFT JOIN creators c ON i.creator_id = c.id
+      WHERE i.id = ${itemId} AND i.status = 'published'
+      LIMIT 1
+    `;
+    const row = rows[0] as Record<string, unknown> | undefined;
+    if (!row) return null;
+
+    const gallery = parseJson<GalleryItem["gallery"]>(row.gallery_json, []);
+    const url = asset === "cover"
+      ? String(row.cover_url || "")
+      : asset === "avatar"
+        ? String(row.creator_avatar || "")
+        : /^\d+$/.test(asset)
+          ? String(gallery[Number(asset)]?.mediaUrl || gallery[Number(asset)]?.url || "")
+          : "";
+
+    if (!url) return null;
+    return { url, sourceUrl: String(row.source_url || "") };
+  },
+  ["gallery-media-target"],
+  { revalidate: 300 },
+);
+
+export async function getGalleryMediaTarget(
+  itemId: string,
+  asset: string,
+): Promise<GalleryMediaTarget | null> {
+  return getCachedMediaTarget(itemId, asset);
+}
+
+const getCachedOutboundTarget = unstable_cache(
+  async (itemId: string): Promise<string | null> => {
+    const rows = await sql`
+      SELECT source_url
+      FROM items
+      WHERE id = ${itemId} AND status = 'published'
+      LIMIT 1
+    `;
+    const value = String((rows[0] as Record<string, unknown> | undefined)?.source_url || "");
+    return value || null;
+  },
+  ["gallery-outbound-target"],
+  { revalidate: 300 },
+);
+
+export async function getGalleryOutboundTarget(itemId: string): Promise<string | null> {
+  return getCachedOutboundTarget(itemId);
 }
 
 export async function getPublishedItemSlugs(limit = 500): Promise<string[]> {

@@ -1,4 +1,5 @@
 import type { BoardEntry, BoardLane, BoardMutation } from "@/lib/types";
+import { galleryMediaUrl, galleryOutboundUrl } from "@/lib/media-routes";
 import { sql } from "@/server/database/client";
 import { DEFAULT_BOARD_ID } from "./board.constants";
 import type { UpdateBoardItemInput } from "./board.validation";
@@ -40,8 +41,8 @@ export async function listBoardItems(): Promise<BoardEntry[]> {
     updatedByColor: String(row.updated_by_color),
     updatedAt: Number(row.updated_at),
     title: String(row.title),
-    coverUrl: String(row.cover_url),
-    sourceUrl: String(row.source_url || ""),
+    coverUrl: galleryMediaUrl(String(row.item_id), "cover"),
+    sourceUrl: galleryOutboundUrl(String(row.item_id)),
   }));
 }
 

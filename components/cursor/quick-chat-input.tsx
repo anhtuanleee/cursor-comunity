@@ -13,7 +13,6 @@ import { useCursorChatPlacement } from "./use-cursor-chat-placement";
 interface QuickChatInputProps {
   color: string;
   position: { x: number; y: number } | null;
-  visible: boolean;
   onTextChange: (text: string) => void;
   onClear: () => void;
   onExit: () => void;
@@ -32,7 +31,6 @@ function isEditableTarget(target: EventTarget | null) {
 export function QuickChatInput({
   color,
   position,
-  visible,
   onTextChange,
   onClear,
   onExit,
@@ -71,10 +69,6 @@ export function QuickChatInput({
     onExit();
     onOpenChange?.(false);
   }, [onExit, onOpenChange]);
-
-  useEffect(() => {
-    if (!visible && isOpen) close();
-  }, [close, isOpen, visible]);
 
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {

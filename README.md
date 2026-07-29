@@ -1,4 +1,4 @@
-# Cursor Community
+# Signal Room
 
 Next.js gallery with SSR/keyset pagination, PostgreSQL-backed collaboration,
 and a Cloudflare Durable Object for realtime cursors, quick chat, reactions,
@@ -83,6 +83,16 @@ files under `partykit/migrations/` before using reactions or the shortlist.
   before the page scrolls.
 - Save references to the shared Keep / Maybe / Reject shortlist and attach a
   decision reason.
+
+## Media gateway
+
+Gallery responses expose same-origin, opaque media paths instead of crawled
+asset URLs: `/media/:itemId/cover`, `/media/:itemId/:asset`, and `/media/:itemId/avatar`.
+The Node route validates public HTTP(S) hosts, blocks redirects, streams only
+image/video responses, and caches them at the CDN. The original publisher is
+still attributed in the detail view; its outbound link uses `/out/:itemId` and
+redirects only after the visitor deliberately selects **Visit**. Proxying does
+not change the source's terms, licensing, or attribution requirements.
 
 ## One-command production deployment
 

@@ -34,9 +34,9 @@ export function Header({
       <div className="flex items-center gap-8 min-w-0">
         <Link href="/" className="flex items-center gap-2 flex-shrink-0">
           <div className="h-6 w-6 bg-primary rounded-full flex items-center justify-center">
-            <span className="text-[0.625rem] font-medium text-white">C</span>
+            <span className="text-[0.625rem] font-medium text-white">S</span>
           </div>
-          <span className="hidden text-h2 text-primary sm:block">Cursor Community</span>
+          <span className="hidden text-h2 text-primary sm:block">Signal Room</span>
         </Link>
 
         <nav data-tour="filters" className="flex items-center gap-1 overflow-x-auto scrollbar-none">

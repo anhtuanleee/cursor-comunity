@@ -1,4 +1,4 @@
-# Cursor Community Design System
+# Signal Room Design System
 
 This project uses a content-first, achromatic design system inspired by Recent.
 The interface should feel like a quiet digital gallery: clear hierarchy,

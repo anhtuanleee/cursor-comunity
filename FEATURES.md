@@ -14,12 +14,12 @@ partner/deal inventory, installable design skills, and a large tool directory:
 - [Recent skills](https://recent.design/skills)
 
 Trying to win by adding “more cards” or another category filter would be
-incremental. Cursor Community should own the layer Recent does not emphasize:
+incremental. Signal Room should own the layer Recent does not emphasize:
 live, social, explainable curation around each reference.
 
 ## Competitive signals
 
-| Product | Strong behavior | Opportunity for Cursor Community |
+| Product | Strong behavior | Opportunity for Signal Room |
 | --- | --- | --- |
 | Recent | Breadth and editorial discovery across many resource types | Add context and collaborative interpretation around each item |
 | Are.na | Channels are collaborative collections of blocks with open/closed/private visibility and export | Build lightweight project boards with a decision trail, without becoming a general-purpose archive |

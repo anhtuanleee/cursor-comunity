@@ -4,7 +4,7 @@ import "./globals.css";
 import { Providers } from "@/providers/providers";
 
 export const metadata: Metadata = {
-  title: "Cursor Community – Design Inspiration",
+  title: "Signal Room – Design Inspiration",
   description: "Real-time collaborative design inspiration gallery. Browse, comment, and discover together.",
   icons: {
     icon: "/favicon.ico",

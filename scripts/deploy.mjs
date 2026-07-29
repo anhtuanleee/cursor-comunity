@@ -181,11 +181,12 @@ async function main() {
 
   run("npm", ["run", "worker:types"]);
   run("npm", ["run", "lint"]);
+  await migrateDatabase(databaseUrl);
+  run("npm", ["run", "content:normalize-slugs"]);
   run("npm", ["run", "build"]);
 
   ensureAuthentication();
   ensureVercelLink();
-  await migrateDatabase(databaseUrl);
 
   const temporaryDirectory = mkdtempSync(join(tmpdir(), "cursor-community-deploy-"));
   const workerSecretsFile = join(temporaryDirectory, "worker-secrets.json");

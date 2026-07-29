@@ -133,8 +133,11 @@ function GalleryCardComponent({
             })}
         </div>
 
-        <div data-tour="card-actions" className="pointer-events-none absolute inset-0 z-[2] flex flex-col justify-end bg-gradient-to-t from-black/60 via-transparent to-transparent p-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
-          <div className="mb-3 flex items-center justify-between">
+        <div
+          data-tour="card-actions"
+          className="pointer-events-none absolute inset-0 z-[2] flex flex-col justify-end bg-gradient-to-t from-black/75 via-black/15 to-transparent p-3 opacity-100 sm:bg-gradient-to-t sm:from-black/60 sm:via-transparent sm:to-transparent sm:p-4 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+        >
+          <div className="mb-2 hidden items-center justify-between sm:mb-3 sm:flex">
             <div className="flex items-center gap-2">
               <Avatar src={item.creator_avatar} name={item.creator_name} size="sm" />
               <span className="max-w-[10rem] truncate text-body font-medium text-white">

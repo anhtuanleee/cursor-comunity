@@ -1,4 +1,4 @@
--- Cursor Community - PostgreSQL Schema (Neon DB)
+-- Signal Room - PostgreSQL Schema (Neon DB)
 
 CREATE TABLE IF NOT EXISTS gallery_categories (
   id         TEXT PRIMARY KEY,

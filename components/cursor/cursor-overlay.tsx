@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 import { useCursors } from "@/hooks/use-cursors";
+import { LocalCursor } from "./local-cursor";
 import { RemoteCursor } from "./remote-cursor";
 import { QuickChatInput } from "./quick-chat-input";
 import { useUser } from "@/providers/user-provider";
@@ -50,11 +51,11 @@ export function CursorOverlay() {
             />
           );
         })}
+      {localPosition ? <LocalCursor position={localPosition} /> : null}
       {user && (
         <QuickChatInput
           color={LOCAL_CURSOR_COLOR}
           position={localPosition}
-          visible={Boolean(localPosition)}
           onTextChange={updateCursorChat}
           onClear={clearCursorChat}
           onExit={exitCursorChat}

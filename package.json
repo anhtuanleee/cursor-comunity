@@ -11,6 +11,7 @@
     "partykit:dev": "wrangler dev --config wrangler.jsonc",
     "partykit:deploy": "wrangler deploy --config wrangler.jsonc",
     "deploy": "node scripts/deploy.mjs",
+    "content:normalize-slugs": "node scripts/normalize-public-item-slugs.mjs",
     "test": "npm run test:unit",
     "test:unit": "jest --runInBand",
     "test:unit:watch": "jest --watch",

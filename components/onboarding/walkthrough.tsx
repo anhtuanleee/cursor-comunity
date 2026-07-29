@@ -14,7 +14,7 @@ type Step = {
 
 const STEPS: Step[] = [
   {
-    title: "Welcome to Cursor Community",
+    title: "Welcome to Signal Room",
     body: "A living collection of creative work. Save references, react together, and follow the activity in real time.",
   },
   {

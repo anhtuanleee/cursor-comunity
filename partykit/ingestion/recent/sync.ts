@@ -1,4 +1,11 @@
 import type { RecentApiResponse } from "./api-types";
+import { itemSlug } from "../creative-feed/identifiers";
+import {
+  finiteNumberOr,
+  hasRequiredText,
+  nullIfUndefined,
+  requiredText,
+} from "../shared/database-values";
 
 const API_BASE = "https://api.recent.design/trpc/items.list";
 const MAX_PAGES_PER_RUN = 1;
@@ -78,7 +85,7 @@ export async function syncRecentItems(
       }
 
       pages++;
-      cursor = page.nextCursor;
+      cursor = nullIfUndefined(page.nextCursor);
       await sql`
         UPDATE sync_state
         SET last_cursor = ${cursor},
@@ -112,14 +119,21 @@ async function upsertRecentItem(
     RecentApiResponse[number]["result"]["data"]["items"]
   >[number],
 ) {
-  if (item.category) {
+  const itemId = requiredText(item.id, "id");
+  const title = requiredText(item.title, "title");
+  const now = Date.now();
+  const category = item.category;
+  const categoryId = hasRequiredText(category?.id, category?.slug, category?.name)
+    ? category.id
+    : null;
+  if (categoryId && category) {
     await sql`
       INSERT INTO gallery_categories(
         id, slug, name, scope, sort_order
       )
       VALUES(
-        ${item.category.id}, ${item.category.slug}, ${item.category.name},
-        ${item.category.scope}, ${item.category.sortOrder}
+        ${category.id}, ${category.slug}, ${category.name},
+        ${nullIfUndefined(item.category.scope)}, ${nullIfUndefined(item.category.sortOrder)}
       )
       ON CONFLICT(id) DO UPDATE SET
         name = EXCLUDED.name,
@@ -129,25 +143,33 @@ async function upsertRecentItem(
     `;
   }
 
-  if (item.creator) {
+  const creator = item.creator;
+  const creatorId = hasRequiredText(creator?.id, creator?.name)
+    ? creator.id
+    : null;
+  if (creatorId && creator) {
     const avatar =
-      item.creator.avatar?.renditions?.find(r => r.width === 150)?.url ??
-      item.creator.avatar?.url ??
+      creator.avatar?.renditions?.find(r => r.width === 150)?.url ??
+      creator.avatar?.url ??
       null;
     await sql`
       INSERT INTO creators(
         id, name, handle, url, website, avatar_url, created_at, updated_at
       )
       VALUES(
-        ${item.creator.id}, ${item.creator.name}, ${item.creator.handle},
-        ${item.creator.url}, ${item.creator.website}, ${avatar},
-        ${item.creator.createdAt}, ${item.creator.updatedAt}
+        ${creator.id}, ${creator.name}, ${nullIfUndefined(creator.handle)},
+        ${nullIfUndefined(creator.url)}, ${nullIfUndefined(creator.website)}, ${avatar},
+        ${nullIfUndefined(creator.createdAt)}, ${nullIfUndefined(creator.updatedAt)}
       )
       ON CONFLICT(id) DO UPDATE SET name = EXCLUDED.name
     `;
   }
 
-  const media = item.gallery || (item.cover ? [item.cover] : []);
+  const media = Array.isArray(item.gallery)
+    ? item.gallery
+    : item.cover
+      ? [item.cover]
+      : [];
   const gallery = media.map(value => {
     const rendition =
       value.renditions?.find(r => r.width >= 720) ||
@@ -173,10 +195,10 @@ async function upsertRecentItem(
       published_at, created_at, updated_at
     )
     VALUES(
-      ${item.id}, ${item.slug}, ${item.title}, ${item.description},
-      ${item.tagline}, ${item.format}, ${item.category?.id || null},
-      ${item.creator?.id || null}, ${item.source?.url || null},
-      ${item.source?.type || null}, ${cover}, ${JSON.stringify(gallery)},
+      ${itemId}, ${itemSlug(item.source?.url || `recent:${itemId}`)}, ${title}, ${nullIfUndefined(item.description)},
+      ${nullIfUndefined(item.tagline)}, ${nullIfUndefined(item.format) ?? "tweet"}, ${categoryId},
+      ${creatorId}, ${nullIfUndefined(item.source?.url)},
+      ${nullIfUndefined(item.source?.type)}, ${cover}, ${JSON.stringify(gallery)},
       ${JSON.stringify(
         (item.tags || []).map(tag => ({
           id: tag.id,
@@ -191,28 +213,30 @@ async function upsertRecentItem(
         copies: 0,
         outbounds: 0,
       })},
-      ${item.rating}, ${item.ratingCount}, ${item.tool}, ${item.githubUrl},
-      ${item.githubStars}, ${item.pricing}, ${item.pricingLabel},
-      ${item.status}, ${item.staffPickAt}, ${item.publishedAt},
-      ${item.createdAt}, ${item.updatedAt}
+      ${nullIfUndefined(item.rating)}, ${nullIfUndefined(item.ratingCount)}, ${nullIfUndefined(item.tool)}, ${nullIfUndefined(item.githubUrl)},
+      ${nullIfUndefined(item.githubStars)}, ${nullIfUndefined(item.pricing)}, ${nullIfUndefined(item.pricingLabel)},
+      ${nullIfUndefined(item.status) ?? "published"}, ${nullIfUndefined(item.staffPickAt)}, ${finiteNumberOr(item.publishedAt, now)},
+      ${finiteNumberOr(item.createdAt, now)}, ${finiteNumberOr(item.updatedAt, now)}
     )
     ON CONFLICT(id) DO UPDATE SET
       title = EXCLUDED.title,
       description = EXCLUDED.description,
+      slug = EXCLUDED.slug,
       cover_url = EXCLUDED.cover_url
   `;
 
   for (const tag of item.tags || []) {
+    if (!hasRequiredText(tag.id, tag.slug, tag.name)) continue;
     await sql`
       INSERT INTO tags(id, context, slug, name, sort_order)
       VALUES(
-        ${tag.id}, ${tag.context}, ${tag.slug}, ${tag.name}, ${tag.sortOrder}
+        ${tag.id}, ${nullIfUndefined(tag.context)}, ${tag.slug}, ${tag.name}, ${nullIfUndefined(tag.sortOrder)}
       )
       ON CONFLICT(id) DO UPDATE SET name = EXCLUDED.name
     `;
     await sql`
       INSERT INTO item_tags(item_id, tag_id)
-      VALUES(${item.id}, ${tag.id})
+      VALUES(${itemId}, ${tag.id})
       ON CONFLICT DO NOTHING
     `;
   }

@@ -6,7 +6,12 @@ import { cn } from "@/lib/utils";
 const VIDEO_EXTENSION = /\.(mp4|webm|mov|m4v)(?:$|[?#])/i;
 
 export function isVideoUrl(url: string) {
-  return VIDEO_EXTENSION.test(url);
+  if (VIDEO_EXTENSION.test(url)) return true;
+  try {
+    return new URL(url, "http://localhost").searchParams.get("kind") === "video";
+  } catch {
+    return false;
+  }
 }
 
 interface MediaCoverProps {
