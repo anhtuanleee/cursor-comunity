@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
 import { readableTextColor } from "./cursor-chat-color";
 import {
   cursorChatMetrics,
@@ -42,7 +41,6 @@ export function QuickChatInput({
   const [isOpen, setIsOpen] = useState(false);
   const [text, setText] = useState("");
   const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
-  const reduceMotion = useReducedMotion();
   const positionRef = useRef(position);
   const inputRef = useRef<HTMLInputElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
@@ -155,12 +153,8 @@ export function QuickChatInput({
     : activePosition.y - cursorGapY;
 
   return (
-    <motion.div
+    <div
       ref={bubbleRef}
-      initial={
-        reduceMotion ? false : { opacity: 0, scale: 0.96, y: "-0.1875rem" }
-      }
-      animate={{ opacity: 1, scale: 1, y: 0 }}
       style={{
         left: pixelsToRem(bubbleLeft, rootSize),
         top: pixelsToRem(bubbleTop, rootSize),
@@ -205,6 +199,6 @@ export function QuickChatInput({
         style={{ color: textColor, caretColor: textColor }}
         className="col-start-1 row-start-1 h-full min-w-0 w-full rounded-full border-0 bg-transparent px-3 text-button font-medium leading-none outline-none ring-0 placeholder:opacity-70 focus:border-0 focus:outline-none focus:ring-0"
       />
-    </motion.div>
+    </div>
   );
 }

@@ -36,14 +36,6 @@ export function CursorOverlay() {
 
   return (
     <div className="cursor-overlay fixed inset-0 z-[200] pointer-events-none">
-      {user && localPosition ? (
-        <RemoteCursor
-          color={LOCAL_CURSOR_COLOR}
-          x={localPosition.x}
-          y={localPosition.y}
-          message={chatMessages.get(user.id)?.text}
-        />
-      ) : null}
       {Array.from(remoteCursors.values())
         .filter(c => c.id !== user?.id && c.lastSeen > 0)
         .map(cursor => {
@@ -54,7 +46,6 @@ export function CursorOverlay() {
               color={color}
               x={cursor.x}
               y={cursor.y}
-              smooth
               message={chatMessages.get(cursor.id)?.text}
             />
           );

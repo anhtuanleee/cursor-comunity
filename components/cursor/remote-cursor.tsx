@@ -1,11 +1,10 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { readableTextColor } from "./cursor-chat-color";
 import {
   cursorChatMetrics,
 } from "./cursor-chat-metrics";
-import { memo, useRef } from "react";
+import { forwardRef, memo, useRef, type Ref } from "react";
 import { useCursorChatPlacement } from "./use-cursor-chat-placement";
 
 interface RemoteCursorProps {
@@ -13,18 +12,15 @@ interface RemoteCursorProps {
   x: number;
   y: number;
   message?: string;
-  smooth?: boolean;
 }
 
-export const RemoteCursor = memo(function RemoteCursor({
+export const RemoteCursor = memo(forwardRef(function RemoteCursor({
   color,
   x,
   y,
   message,
-  smooth = false,
-}: RemoteCursorProps) {
+}: RemoteCursorProps, ref: Ref<HTMLDivElement>) {
   const bubbleRef = useRef<HTMLDivElement>(null);
-  const reduceMotion = useReducedMotion();
   const { placement, maxWidth } = useCursorChatPlacement(
     { x, y },
     bubbleRef,
@@ -33,38 +29,23 @@ export const RemoteCursor = memo(function RemoteCursor({
   const placeLeft = placement.startsWith("left");
   const placeAbove = placement.endsWith("above");
   const textColor = readableTextColor(color);
-  const cursorColor = smooth ? color : "#111111";
 
   return (
     <div
+      ref={ref}
       className="absolute pointer-events-none will-change-transform"
       style={{
         left: 0,
         top: 0,
         transform: `translate3d(${x}px, ${y}px, 0)`,
-        transition: smooth
-          ? "transform 0.08s cubic-bezier(0.22, 1, 0.36, 1)"
-          : "none",
       }}
     >
       <svg viewBox="0 0 18 22" fill="none" className="h-[3rem] w-[3.25rem] drop-shadow-sm">
-        <path d="M1 1L7 18L9.5 11L16 9.5L1 1Z" fill={cursorColor} stroke="white" strokeWidth="1.5" />
+        <path d="M1 1L7 18L9.5 11L16 9.5L1 1Z" fill={color} stroke="white" strokeWidth="1.5" />
       </svg>
-      <AnimatePresence>
-        {message && (
-          <motion.div
+      {message ? (
+          <div
             ref={bubbleRef}
-            initial={
-              reduceMotion
-                ? false
-                : {
-                  opacity: 0,
-                  scale: 0.94,
-                  y: placeAbove ? "0.25rem" : "-0.25rem",
-                }
-            }
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: placeAbove ? "0.1875rem" : "-0.1875rem" }}
             style={{
               left: `${placeLeft ? -cursorChatMetrics.gapX : cursorChatMetrics.gapX}rem`,
               top: `${placeAbove ? -cursorChatMetrics.gapY : cursorChatMetrics.gapY}rem`,
@@ -77,9 +58,8 @@ export const RemoteCursor = memo(function RemoteCursor({
               }`}
           >
             {message}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        ) : null}
     </div>
   );
-});
+}));
