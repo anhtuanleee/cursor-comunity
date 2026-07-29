@@ -83,12 +83,12 @@ export async function getGalleryPage({
   const decodedCursor = decodeCursor(cursor);
   const where =
     category && decodedCursor
-      ? sql`WHERE cat.slug = ${category} AND (i.published_at, i.id) < (${decodedCursor.publishedAt}, ${decodedCursor.id})`
+      ? sql`WHERE i.status = 'published' AND cat.slug = ${category} AND (i.published_at, i.id) < (${decodedCursor.publishedAt}, ${decodedCursor.id})`
       : category
-        ? sql`WHERE cat.slug = ${category}`
+        ? sql`WHERE i.status = 'published' AND cat.slug = ${category}`
         : decodedCursor
-          ? sql`WHERE (i.published_at, i.id) < (${decodedCursor.publishedAt}, ${decodedCursor.id})`
-          : sql``;
+          ? sql`WHERE i.status = 'published' AND (i.published_at, i.id) < (${decodedCursor.publishedAt}, ${decodedCursor.id})`
+          : sql`WHERE i.status = 'published'`;
 
   const rows = await sql`
     SELECT
@@ -135,7 +135,8 @@ export async function getGalleryItem(identifier: string): Promise<GalleryItem | 
     FROM items i
     LEFT JOIN creators c ON i.creator_id = c.id
     LEFT JOIN gallery_categories cat ON i.category_id = cat.id
-    WHERE i.slug = ${identifier} OR i.id = ${identifier}
+    WHERE (i.slug = ${identifier} OR i.id = ${identifier})
+      AND i.status = 'published'
     LIMIT 1
   `;
 

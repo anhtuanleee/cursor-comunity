@@ -2,6 +2,7 @@ import type postgres from "postgres";
 import type { CreativeEntry, FeedResponse } from "./types";
 
 type Database = postgres.Sql;
+const MODERATION_AGENT = "automated-creative-web-gate-v2";
 
 export async function markNotModified(
   sql: Database,
@@ -69,7 +70,7 @@ export async function persistModerationDecision(
   },
 ) {
   const previous = await sql`
-    SELECT decision, reason
+    SELECT decision, reason, decided_by
     FROM moderation_decisions
     WHERE source_id = ${input.sourceKey} AND external_id = ${input.externalId}
     ORDER BY decided_at DESC
@@ -77,7 +78,8 @@ export async function persistModerationDecision(
   `;
   if (
     previous[0]?.decision === input.decision &&
-    previous[0]?.reason === input.reason
+    previous[0]?.reason === input.reason &&
+    previous[0]?.decided_by === MODERATION_AGENT
   ) return;
 
   await sql`
@@ -86,8 +88,19 @@ export async function persistModerationDecision(
     )
     VALUES(
       ${crypto.randomUUID()}, ${input.sourceKey}, ${input.externalId},
-      ${input.decision}, ${input.reason}, 'automated-quality-gate-v1', ${Date.now()}
+      ${input.decision}, ${input.reason}, ${MODERATION_AGENT}, ${Date.now()}
     )
+  `;
+}
+
+export async function unpublishRejectedItem(
+  sql: Database,
+  externalId: string,
+) {
+  await sql`
+    UPDATE items
+    SET status = 'rejected', updated_at = ${Date.now()}
+    WHERE id = ${externalId} AND source_type = 'creative-feed'
   `;
 }
 
@@ -134,6 +147,7 @@ export async function persistGalleryItem(
       title = EXCLUDED.title,
       description = EXCLUDED.description,
       slug = EXCLUDED.slug,
+      status = EXCLUDED.status,
       cover_url = EXCLUDED.cover_url,
       gallery_json = EXCLUDED.gallery_json,
       tags_json = EXCLUDED.tags_json,

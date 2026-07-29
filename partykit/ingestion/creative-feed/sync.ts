@@ -21,6 +21,7 @@ import {
   persistGalleryItem,
   persistModerationDecision,
   persistRawItem,
+  unpublishRejectedItem,
 } from "./repository";
 import { enrichEntryImages } from "./page-preview";
 import { moderateCreativeEntry } from "./moderation";
@@ -188,6 +189,7 @@ export async function syncCreativeSources(
             ...moderation,
           });
           if (moderation.decision !== "approved") {
+            await unpublishRejectedItem(sql, externalId);
             rejected++;
             continue;
           }
