@@ -33,6 +33,7 @@ export const RemoteCursor = memo(function RemoteCursor({
   const placeLeft = placement.startsWith("left");
   const placeAbove = placement.endsWith("above");
   const textColor = readableTextColor(color);
+  const cursorColor = smooth ? color : "#111111";
 
   return (
     <div
@@ -47,7 +48,7 @@ export const RemoteCursor = memo(function RemoteCursor({
       }}
     >
       <svg viewBox="0 0 18 22" fill="none" className="h-[3rem] w-[3.25rem] drop-shadow-sm">
-        <path d="M1 1L7 18L9.5 11L16 9.5L1 1Z" fill="#111111" stroke="white" strokeWidth="1.5" />
+        <path d="M1 1L7 18L9.5 11L16 9.5L1 1Z" fill={cursorColor} stroke="white" strokeWidth="1.5" />
       </svg>
       <AnimatePresence>
         {message && (

@@ -7,6 +7,8 @@ import { QuickChatInput } from "./quick-chat-input";
 import { useUser } from "@/providers/user-provider";
 import { assignRemoteCursorColors } from "./cursor-remote-color";
 
+const LOCAL_CURSOR_COLOR = "#111111";
+
 export function CursorOverlay() {
   const {
     remoteCursors,
@@ -36,7 +38,7 @@ export function CursorOverlay() {
     <div className="cursor-overlay fixed inset-0 z-[200] pointer-events-none">
       {user && localPosition ? (
         <RemoteCursor
-          color={user.color}
+          color={LOCAL_CURSOR_COLOR}
           x={localPosition.x}
           y={localPosition.y}
           message={chatMessages.get(user.id)?.text}
@@ -59,7 +61,7 @@ export function CursorOverlay() {
         })}
       {user && (
         <QuickChatInput
-          color={user.color}
+          color={LOCAL_CURSOR_COLOR}
           position={localPosition}
           visible={Boolean(localPosition)}
           onTextChange={updateCursorChat}
