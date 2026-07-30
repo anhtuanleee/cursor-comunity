@@ -120,9 +120,10 @@ interactive login flows. If the Worker has a custom domain, also set
 ## Creative content ingestion
 
 Cloudflare Cron triggers the Recent API every fifteen minutes and public
-RSS/Atom feeds every thirty minutes. Codrops, Sidebar, and One Page Love are
-enabled in the curated source registry by default. Add or override feeds with
-`CREATIVE_FEEDS`; use comma-separated URLs for a quick setup:
+RSS/Atom feeds every thirty minutes. The curated registry includes Awwwards,
+Codrops, Creative Boom, Muzli, One Page Love, Sidebar, Smashing Magazine,
+Speckyboy, UX Collective, Webdesigner Depot, and Webflow. Add or override feeds
+with `CREATIVE_FEEDS`; use comma-separated URLs for a quick setup:
 
 ```bash
 CREATIVE_FEEDS=https://example.com/feed.xml,https://another.example/rss

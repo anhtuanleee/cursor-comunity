@@ -6,6 +6,7 @@ const MAX_PAGE_BYTES = 1_000_000;
 const MAX_REDIRECTS = 3;
 const PREVIEW_CONCURRENCY = 3;
 const MAX_PAGE_IMAGES = 12;
+const MAX_PREVIEWS_PER_SOURCE = 12;
 const PLACEHOLDER_IMAGE = /(?:^|[\/_-])(?:ad(?:vert)?|avatar|author|default|favicon|icon|logo|pixel|placeholder|profile|sprite|tracking)(?:[\/_?.-]|$)/i;
 
 function decodeHtml(value: string): string {
@@ -354,12 +355,25 @@ export async function enrichEntryImages(
   entries: CreativeEntry[],
   source: CreativeSource,
 ): Promise<CreativeEntry[]> {
-  const enriched: CreativeEntry[] = [];
-  for (let index = 0; index < entries.length; index += PREVIEW_CONCURRENCY) {
-    const batch = entries.slice(index, index + PREVIEW_CONCURRENCY);
-    enriched.push(...await Promise.all(
-      batch.map(entry => resolveEntryImages(entry, source)),
-    ));
+  if (!source.resolvePageImage) return entries;
+
+  const previewable = entries
+    .map((entry, index) => ({ entry, index }))
+    // Existing RSS media already satisfies the cover gate. Do not spend a
+    // network request on every article just to enlarge its gallery.
+    .filter(({ entry }) => !entry.imageUrl && !entry.mediaUrl)
+    .slice(0, MAX_PREVIEWS_PER_SOURCE);
+  if (!previewable.length) return entries;
+
+  const resolved = new Map<number, CreativeEntry>();
+  for (let index = 0; index < previewable.length; index += PREVIEW_CONCURRENCY) {
+    const batch = previewable.slice(index, index + PREVIEW_CONCURRENCY);
+    const resolvedBatch = await Promise.all(
+      batch.map(({ entry }) => resolveEntryImages(entry, source)),
+    );
+    batch.forEach(({ index: entryIndex }, batchIndex) => {
+      resolved.set(entryIndex, resolvedBatch[batchIndex]);
+    });
   }
-  return enriched;
+  return entries.map((entry, index) => resolved.get(index) ?? entry);
 }
