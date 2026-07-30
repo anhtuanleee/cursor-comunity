@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { reclassifyCreativeGallery } from "../../../../partykit/ingestion/creative-feed/reclassify";
 import { syncCreativeSources } from "../../../../partykit/ingestion/creative-feed/sync";
 import { syncRecentItems } from "../../../../partykit/ingestion/recent/sync";
 
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
   const source = request.nextUrl.searchParams.get("source");
   if (!source || !SOURCES.has(source)) {
     return NextResponse.json(
-      { error: "source must be recent, creative, or x" },
+      { error: "source must be recent or creative" },
       { status: 400 },
     );
   }
@@ -46,6 +47,10 @@ export async function GET(request: NextRequest) {
   const result = source === "recent"
     ? await syncRecentItems(env)
     : await syncCreativeSources(env);
+  const reclassification = source === "creative"
+    && request.nextUrl.searchParams.get("reclassify") === "1"
+    ? await reclassifyCreativeGallery(env)
+    : null;
 
-  return NextResponse.json({ source, result });
+  return NextResponse.json({ source, result, reclassification });
 }

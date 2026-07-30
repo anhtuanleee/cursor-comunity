@@ -1,4 +1,10 @@
 import { CURATED_CREATIVE_SOURCES } from "./curated-sources";
+import {
+  classifyCreativeEntry,
+  sourceCategoryFallback,
+  type CreativeGalleryCategory,
+} from "./classification";
+import { ensureCreativeGalleryCategory } from "./category-repository";
 import { enrichWithGemini } from "./gemini-enrichment";
 import { fetchFeed } from "./feed-client";
 import { parseFeed } from "./feed-parser";
@@ -27,10 +33,6 @@ import { enrichEntryImages } from "./page-preview";
 import { moderateCreativeEntry } from "./moderation";
 import type { CreativeSource } from "./types";
 
-const DEFAULT_CATEGORY = {
-  id: "creative-content",
-  name: "Creative Content",
-};
 const SOURCES_PER_RUN = 4;
 
 function sourceBatch(sources: CreativeSource[]): CreativeSource[] {
@@ -83,6 +85,7 @@ export async function syncCreativeSources(
   let lockAcquired = false;
   let synced = 0;
   let rejected = 0;
+  const persistedCategories = new Set<string>();
   const rejectedReasons = new Map<string, number>();
   const sourceResults: Array<{
     source: string;
@@ -94,6 +97,13 @@ export async function syncCreativeSources(
   const countRejected = (reason: string) => {
     rejected++;
     rejectedReasons.set(reason, (rejectedReasons.get(reason) ?? 0) + 1);
+  };
+  const ensureCategory = async (category: CreativeGalleryCategory) => {
+    if (!persistedCategories.has(category.id)) {
+      await ensureCreativeGalleryCategory(sql, category);
+      persistedCategories.add(category.id);
+    }
+    return category.id;
   };
 
   try {
@@ -170,26 +180,6 @@ export async function syncCreativeSources(
           parseFeed(feed.body, source.url),
           source,
         );
-        const category = source.category?.trim() || DEFAULT_CATEGORY.name;
-        const categorySlug = slugify(category);
-        const categoryId = source.category
-          ? `creative-${categorySlug}`
-          : DEFAULT_CATEGORY.id;
-        const categoryRows = await sql`
-          INSERT INTO gallery_categories(
-            id, slug, name, scope, sort_order
-          )
-          VALUES(
-            ${categoryId}, ${categorySlug}, ${category},
-            'creative', 100
-          )
-          ON CONFLICT(slug) DO UPDATE SET name = EXCLUDED.name
-          RETURNING id
-        `;
-        const resolvedCategoryId = String(
-          categoryRows[0]?.id ?? categoryId,
-        );
-
         let importedCount = 0;
         let sourceRejected = 0;
         for (const entry of entries) {
@@ -239,22 +229,27 @@ export async function syncCreativeSources(
           if (!imageUrl) continue;
           const enriched = await enrichWithGemini(entryForModeration, source, env);
           const displayEntry = enriched
-            ? {
-                ...enriched,
-                tags: [...(source.tags ?? []), ...enriched.tags],
-              }
-            : { ...entryForModeration, description: "", tags: source.tags ?? [] };
+            ? { ...enriched, tags: enriched.tags }
+            : { ...entryForModeration, description: "", tags: [] };
           const mediaTags = displayEntry.mediaKind === "image"
             ? []
             : [displayEntry.mediaKind, "motion"];
+          const category = classifyCreativeEntry(
+            {
+              ...displayEntry,
+              description: entryForModeration.description,
+            },
+            displayEntry.tags,
+            sourceCategoryFallback(source),
+          );
           await persistGalleryItem(sql, {
             externalId,
-            categoryId: resolvedCategoryId,
+            categoryId: await ensureCategory(category),
             entry: { ...displayEntry, imageUrl, author },
             creatorId: `creative-creator-${payloadChecksum(`${sourceKey}:${author.toLowerCase()}`).slice(0, 24)}`,
             tags: sourceTags({
               ...source,
-              tags: [...displayEntry.tags, ...mediaTags],
+              tags: [...(source.tags ?? []), ...displayEntry.tags, ...mediaTags],
             }),
             itemSlug,
           });
