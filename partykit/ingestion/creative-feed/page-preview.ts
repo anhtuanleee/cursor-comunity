@@ -58,6 +58,27 @@ function isEditorialImage(url: string, context = ""): boolean {
   return !/(?:tracking|pixel|beacon|sprite|favicon)/.test(signal);
 }
 
+function isPublicPreviewHostname(hostname: string): boolean {
+  const normalized = hostname.toLowerCase().replace(/\.$/, "");
+  if (!normalized || normalized === "localhost" || normalized.endsWith(".local") || normalized.endsWith(".internal")) {
+    return false;
+  }
+  // An external preview is only enabled for a curated source. Reject private
+  // IPv4 literals outright; DNS hosts remain constrained by HTTPS + redirect
+  // limits below.
+  const octets = normalized.split(".");
+  if (octets.length === 4 && octets.every(part => /^\d+$/.test(part))) {
+    const numbers = octets.map(Number);
+    if (numbers.some(value => value > 255)) return false;
+    const [first, second] = numbers;
+    if (first === 0 || first === 10 || first === 127 || first >= 224) return false;
+    if (first === 169 && second === 254) return false;
+    if (first === 172 && second >= 16 && second <= 31) return false;
+    if (first === 192 && second === 168) return false;
+  }
+  return !normalized.includes(":");
+}
+
 function roleFor(context: string, fallback: CreativeImage["role"]): CreativeImage["role"] {
   if (/\b(?:og:image|twitter:image|social|share)\b/i.test(context)) return "social";
   if (/\b(?:video|poster)\b/i.test(context)) return "video-poster";
@@ -238,15 +259,21 @@ async function readBoundedText(
   return body + decoder.decode();
 }
 
-async function fetchSameOriginHtml(
+async function fetchPreviewHtml(
   initialUrl: string,
   allowedHostname: string,
+  allowExternalPreview: boolean,
 ): Promise<{ body: string; finalUrl: string } | null> {
   let currentUrl = initialUrl;
 
   for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount++) {
     const parsed = new URL(currentUrl);
-    if (!isHttpUrl(currentUrl) || parsed.hostname !== allowedHostname) return null;
+    if (
+      !isHttpUrl(currentUrl) ||
+      parsed.protocol !== "https:" ||
+      !isPublicPreviewHostname(parsed.hostname) ||
+      (!allowExternalPreview && parsed.hostname !== allowedHostname)
+    ) return null;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -283,9 +310,13 @@ async function resolveEntryImages(
   if (!source.resolvePageImage) return entry;
 
   const allowedHostname = new URL(source.url).hostname;
-  let page: Awaited<ReturnType<typeof fetchSameOriginHtml>>;
+  let page: Awaited<ReturnType<typeof fetchPreviewHtml>>;
   try {
-    page = await fetchSameOriginHtml(entry.link, allowedHostname);
+    page = await fetchPreviewHtml(
+      entry.link,
+      allowedHostname,
+      source.allowExternalPreview === true,
+    );
   } catch {
     return entry;
   }

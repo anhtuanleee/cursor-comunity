@@ -4,7 +4,9 @@ export interface CreativeSource {
   category?: string;
   tags?: string[];
   resolvePageImage?: boolean;
-  /** Only sources maintained in curated-sources.ts may publish automatically. */
+  /** Allow a curated directory feed to resolve its external article links. */
+  allowExternalPreview?: boolean;
+  /** Indicates a known source; every item still passes automated moderation. */
   autoPublish?: boolean;
 }
 
@@ -19,7 +21,7 @@ export interface CreativeImage {
 
 export interface CreativeEntry {
   title: string;
-  /** RSS/Atom article author. A publisher fallback is deliberately not used. */
+  /** RSS/Atom author; the source publisher is a transparent fallback. */
   author: string | null;
   link: string;
   description: string;

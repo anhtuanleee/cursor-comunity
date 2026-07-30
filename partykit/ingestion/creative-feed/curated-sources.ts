@@ -14,6 +14,9 @@ export const CURATED_CREATIVE_SOURCES: CreativeSource[] = [
     category: "Design Resources",
     tags: ["design", "resources", "curated"],
     resolvePageImage: true,
+    // Sidebar is a trusted directory: its RSS entries link to external design
+    // sites, so its cover can only be resolved from that destination.
+    allowExternalPreview: true,
   },
   {
     name: "One Page Love",

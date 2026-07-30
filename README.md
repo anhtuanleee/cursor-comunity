@@ -119,7 +119,7 @@ interactive login flows. If the Worker has a custom domain, also set
 
 ## Creative content ingestion
 
-The realtime Worker syncs the Recent API every five minutes and public
+Cloudflare Cron triggers the Recent API every fifteen minutes and public
 RSS/Atom feeds every thirty minutes. Codrops, Sidebar, and One Page Love are
 enabled in the curated source registry by default. Add or override feeds with
 `CREATIVE_FEEDS`; use comma-separated URLs for a quick setup:
@@ -136,7 +136,8 @@ CREATIVE_FEEDS='[{"url":"https://example.com/feed.xml","category":"Brand Inspira
 
 All parsed entries are retained in `raw_items`; publishing is automatic but
 strict. An entry must be in creative/UI-UX scope, have a valid public cover
-(image, video, GIF, or Lottie), and expose a credible article author. Unsafe,
+(image, video, GIF, or Lottie), and expose a credible article author or the
+feed publisher. Unsafe,
 promotional, placeholder-media, or off-topic entries stay rejected with an
 audit record in `moderation_decisions`. Approved entries receive a creator
 record and are deduplicated by their canonical link, stored as

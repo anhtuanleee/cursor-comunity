@@ -83,6 +83,18 @@ export async function syncCreativeSources(
   let lockAcquired = false;
   let synced = 0;
   let rejected = 0;
+  const rejectedReasons = new Map<string, number>();
+  const sourceResults: Array<{
+    source: string;
+    fetched: number;
+    synced: number;
+    rejected: number;
+    status: "succeeded" | "not-modified" | "failed";
+  }> = [];
+  const countRejected = (reason: string) => {
+    rejected++;
+    rejectedReasons.set(reason, (rejectedReasons.get(reason) ?? 0) + 1);
+  };
 
   try {
     const lock = await sql`
@@ -144,6 +156,13 @@ export async function syncCreativeSources(
         });
         if (feed.notModified) {
           await markNotModified(sql, runId, sourceKey, feed);
+          sourceResults.push({
+            source: sourceName,
+            fetched: 0,
+            synced: 0,
+            rejected: 0,
+            status: "not-modified",
+          });
           continue;
         }
 
@@ -172,6 +191,7 @@ export async function syncCreativeSources(
         );
 
         let importedCount = 0;
+        let sourceRejected = 0;
         for (const entry of entries) {
           const externalId = itemId(entry.link);
           const payload = JSON.stringify(entry);
@@ -182,7 +202,14 @@ export async function syncCreativeSources(
             payload,
             checksum: payloadChecksum(payload),
           });
-          const moderation = moderateCreativeEntry(entry);
+          // Many quality RSS feeds omit individual bylines. Preserve the
+          // publisher as the visible creator rather than reject valid work;
+          // the raw item still records the original missing author field.
+          const entryForModeration = {
+            ...entry,
+            author: entry.author ?? sourceName,
+          };
+          const moderation = moderateCreativeEntry(entryForModeration);
           await persistModerationDecision(sql, {
             sourceKey,
             externalId,
@@ -190,14 +217,16 @@ export async function syncCreativeSources(
           });
           if (moderation.decision !== "approved") {
             await unpublishRejectedItem(sql, externalId);
-            rejected++;
+            countRejected(moderation.reason);
+            sourceRejected++;
             continue;
           }
-          const author = entry.author?.trim();
+          const author = entryForModeration.author?.trim();
           // Kept as a storage-boundary assertion even though the moderation
           // gate above has already validated the author.
           if (!author) {
-            rejected++;
+            countRejected("missing-storage-author");
+            sourceRejected++;
             continue;
           }
           // The gate has already verified it; this explicit narrowing keeps
@@ -208,13 +237,13 @@ export async function syncCreativeSources(
               : null
           );
           if (!imageUrl) continue;
-          const enriched = await enrichWithGemini(entry, source, env);
+          const enriched = await enrichWithGemini(entryForModeration, source, env);
           const displayEntry = enriched
             ? {
                 ...enriched,
                 tags: [...(source.tags ?? []), ...enriched.tags],
               }
-            : { ...entry, description: "", tags: source.tags ?? [] };
+            : { ...entryForModeration, description: "", tags: source.tags ?? [] };
           const mediaTags = displayEntry.mediaKind === "image"
             ? []
             : [displayEntry.mediaKind, "motion"];
@@ -241,14 +270,30 @@ export async function syncCreativeSources(
           entries.length,
           importedCount,
         );
+        sourceResults.push({
+          source: sourceName,
+          fetched: entries.length,
+          synced: importedCount,
+          rejected: sourceRejected,
+          status: "succeeded",
+        });
       } catch (error) {
         await markFailed(sql, runId, sourceKey, source.url, error);
+        sourceResults.push({
+          source: sourceName,
+          fetched: 0,
+          synced: 0,
+          rejected: 0,
+          status: "failed",
+        });
       }
     }
 
     return {
       synced,
       rejected,
+      rejectedReasons: Object.fromEntries(rejectedReasons),
+      sourceResults,
       sources: scheduledSources.length,
       totalSources: sources.length,
     };

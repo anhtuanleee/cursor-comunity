@@ -48,6 +48,8 @@ export function parseSources(raw: string | undefined): CreativeSource[] {
             source.resolvePageImage === true
               ? true
               : undefined,
+          // External previewing is reserved for audited built-in sources.
+          allowExternalPreview: undefined,
           autoPublish: false,
         }];
       });
