@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Header } from "@/components/header/header";
+import { Header, type GalleryFilter } from "@/components/header/header";
 import { GalleryGrid } from "@/components/gallery/gallery-grid";
 import { CursorOverlay } from "@/components/cursor/cursor-overlay";
 import { CommentLayer } from "@/components/comment/comment-layer";
@@ -18,7 +18,13 @@ import { useSocket } from "@/providers/socket-provider";
 import { useUser } from "@/providers/user-provider";
 import { useCollaboration } from "@/hooks/use-collaboration";
 
-export function HomeClient({ initialPage }: { initialPage: GalleryPage }) {
+export function HomeClient({
+  initialPage,
+  filters,
+}: {
+  initialPage: GalleryPage;
+  filters: GalleryFilter[];
+}) {
   const { onlineCount } = useSocket();
   const { user } = useUser();
   const {
@@ -136,6 +142,7 @@ export function HomeClient({ initialPage }: { initialPage: GalleryPage }) {
       <Header
         activeCategory={activeCategory}
         onCategoryChange={setActiveCategory}
+        filters={filters}
         onlineCount={onlineCount}
         onBoardOpen={openBoard}
       />

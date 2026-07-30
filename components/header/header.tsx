@@ -3,22 +3,15 @@
 import Link from "next/link";
 import { BoardIcon, CommentIcon } from "@/components/ui/icons";
 
-const FILTERS = [
-  { slug: null, label: "All" },
-  { slug: "web", label: "Web" },
-  { slug: "interface", label: "Interface" },
-  { slug: "branding", label: "Branding" },
-  { slug: "product", label: "Product" },
-  { slug: "print", label: "Print" },
-  { slug: "typography", label: "Typography" },
-  { slug: "motion", label: "Motion" },
-  { slug: "illustration", label: "Illustration" },
-  { slug: "3d", label: "3D" },
-];
+export interface GalleryFilter {
+  slug: string | null;
+  label: string;
+}
 
 interface HeaderProps {
   activeCategory: string | null;
   onCategoryChange: (slug: string | null) => void;
+  filters: GalleryFilter[];
   onlineCount?: number;
   onBoardOpen?: () => void;
 }
@@ -26,6 +19,7 @@ interface HeaderProps {
 export function Header({
   activeCategory,
   onCategoryChange,
+  filters,
   onlineCount = 0,
   onBoardOpen,
 }: HeaderProps) {
@@ -40,7 +34,7 @@ export function Header({
         </Link>
 
         <nav data-tour="filters" className="flex items-center gap-1 overflow-x-auto scrollbar-none">
-          {FILTERS.map(f => (
+          {filters.map(f => (
             <button
               key={f.slug || "all"}
               type="button"
