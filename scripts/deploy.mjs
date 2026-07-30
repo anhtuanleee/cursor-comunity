@@ -194,6 +194,12 @@ async function main() {
   if (process.env.CREATIVE_FEEDS) {
     workerSecrets.CREATIVE_FEEDS = process.env.CREATIVE_FEEDS;
   }
+  if (process.env.INGEST_URL) {
+    workerSecrets.INGEST_URL = process.env.INGEST_URL;
+  }
+  if (process.env.INGEST_CRON_SECRET) {
+    workerSecrets.INGEST_CRON_SECRET = process.env.INGEST_CRON_SECRET;
+  }
   writeFileSync(
     workerSecretsFile,
     JSON.stringify(workerSecrets),

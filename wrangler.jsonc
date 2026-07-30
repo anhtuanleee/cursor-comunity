@@ -5,7 +5,10 @@
   "compatibility_date": "2026-07-28",
   "compatibility_flags": ["nodejs_compat"],
   "triggers": {
-    "crons": []
+    "crons": [
+      "2,17,32,47 * * * *",
+      "7,37 * * * *"
+    ]
   },
   "durable_objects": {
     "bindings": [

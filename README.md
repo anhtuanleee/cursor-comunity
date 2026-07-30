@@ -150,11 +150,11 @@ Each feed receives a source record, conditional HTTP checkpoint
 (`ETag` / `Last-Modified`), raw-item record, and crawl-run history. Unchanged
 feeds return `304` and are not reparsed.
 
-### Free Workers scheduling
+### Cloudflare scheduling on the Free plan
 
-Cloudflare Workers Free has a very small CPU allowance for cron invocations, so
-the Worker does not run database crawlers. Instead, schedule authenticated GET
-requests to `/api/internal/ingest` from an external cron service or a CI job:
+Cloudflare Cron is the scheduler. To remain within the Free plan's 10ms CPU
+allowance, the Worker only makes an authenticated request to the Node endpoint;
+the endpoint does the actual crawling and database work:
 
 ```text
 GET https://your-site.example/api/internal/ingest?source=recent
@@ -164,9 +164,11 @@ Authorization: Bearer <INGEST_CRON_SECRET>
 Valid sources are `recent` and `creative`. Keep `INGEST_CRON_SECRET` as a
 server-only Vercel environment variable.
 
-This repository includes `.github/workflows/ingest.yml`, which runs every 15
-minutes and staggers the sources. Add these GitHub Actions secrets before
-enabling it on the default branch:
+Configure these Worker secrets with the same values used by Vercel:
 
 - `INGEST_URL` — production Vercel URL, without a trailing slash;
 - `INGEST_CRON_SECRET` — exactly the same value configured on Vercel.
+
+The schedule runs Recent at minutes `02, 17, 32, 47` and creative feeds at
+minutes `07, 37` (UTC). `.github/workflows/ingest.yml` remains available for
+manual recovery runs only; it no longer schedules duplicate crawls.

@@ -1,9 +1,6 @@
 name: Ingest creative sources
 
 on:
-  schedule:
-    - cron: "2,17,32,47 * * * *"
-    - cron: "7,37 * * * *"
   workflow_dispatch:
     inputs:
       source:
@@ -26,7 +23,7 @@ jobs:
         env:
           INGEST_URL: ${{ secrets.INGEST_URL }}
           INGEST_CRON_SECRET: ${{ secrets.INGEST_CRON_SECRET }}
-          SOURCE: ${{ github.event_name == 'workflow_dispatch' && inputs.source || github.event.schedule == '2,17,32,47 * * * *' && 'recent' || 'creative' }}
+          SOURCE: ${{ inputs.source }}
         run: |
           test -n "$INGEST_URL"
           test -n "$INGEST_CRON_SECRET"
